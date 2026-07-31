@@ -1,0 +1,69 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  LANDLORD
+  TENANT
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model User {
+  id         String     @id @default(uuid())
+  email      String     @unique
+  password   String
+  name       String
+  role       Role       @default(TENANT)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  properties Property[]
+  rentals    Rental[]
+}
+
+model Property {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  location    String
+  price       Float
+  type        String
+  amenities   String[]
+  landlordId  String
+  landlord    User     @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+  rentals     Rental[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Rental {
+  id            String        @id @default(uuid())
+  tenantId      String
+  tenant        User          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  propertyId    String
+  property      Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  amount        Float
+  transactionId String?       @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
